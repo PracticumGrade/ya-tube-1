@@ -2,7 +2,6 @@ import pytest
 from rest_framework import status
 from django.shortcuts import reverse
 
-from conftest import N_PER_FIXTURE, POST_FIELDS
 from posts.models import Post
 
 
@@ -107,7 +106,7 @@ def test_posts_list(api_client, posts):
         f"Убедитесь, что при отправке GET-запроса на url `{url}`  "
         f"возвращается список."
     )
-    assert len(data) == N_PER_FIXTURE, (
+    assert len(data) == len(posts), (
         f"Убедитесь, что при отправке GET-запроса на url `{url}`  "
         f"для получение списка постов возвращаются все посты."
     )
@@ -185,4 +184,19 @@ def test_update_post(api_client, post, post_pk_for_args, post_update_data, metho
     assert data["text"] == post_update_data["text"], (
         f"Убедитесь, что при отправке {method}-запроса на url `{url}`  "
         f"для обновления поста, возвращается словарь с обновленным полем `text`"
+    )
+
+
+def test_delete_post(api_client, posts, post, post_pk_for_args):
+    url = reverse("posts:posts-detail", args=post_pk_for_args)
+    response = api_client.delete(url)
+
+    assert Post.objects.count() == len(posts), (
+        f"Убедитесь, что при отправке DELETE-запроса на url `{url}`  "
+        f"для удаления поста, из БД удаляется указанный пост."
+    )
+
+    assert response.data is None, (
+        f"Убедитесь, что при отправке DELETE-запроса на url `{url}`  "
+        f"для обновления поста, возвращается пустое тело ответа."
     )
