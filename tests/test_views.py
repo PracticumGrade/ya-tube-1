@@ -79,21 +79,9 @@ def test_incorrect_create_post(api_client):
     empty_data = {}
     response = api_client.post(url, data=empty_data)
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST, (
-        f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
-        f"для создания нового поста c некорректными данными, возвращается статус-код {status.HTTP_400_BAD_REQUEST}"
-    )
-
     assert Post.objects.count() == 0, (
         f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
         f"для создания нового поста, объект не был добавлен в БД."
-    )
-
-    data = response.json()
-    expected_value = {"text": ["This field is required."]}
-    assert data == expected_value, (
-        f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
-        f"для создания нового поста c некорректными данными, в теле ответа возвращаются ошибки."
     )
 
 
@@ -133,6 +121,32 @@ def test_not_found_post(api_client, method, data):
 
     status_code = status.HTTP_404_NOT_FOUND
     assert response.status_code == status_code, (
-        f"Убедитесь, что при отправке {method}-запроса на url `{url}` для получения несуществующего объекта"
-        f"возвращается статус-код {status_code}"
+        f"Убедитесь, что при отправке {method}-запроса на url `{url}` "
+        f"для получения несуществующего объекта возвращается статус-код {status_code}"
+    )
+
+
+@pytest.mark.parametrize(
+    "method,name,args", [
+        ("POST", "posts:posts-list", None,),
+        ("PUT", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"),),
+    ]
+)
+def test_bad_request_and_errors(api_client, post, method, name, args):
+    url = reverse(name, args=args)
+    request_method = getattr(api_client, method.lower())
+    bad_data = {}
+    response = request_method(url, data=bad_data)
+
+    status_code = status.HTTP_400_BAD_REQUEST
+    assert response.status_code == status_code, (
+        f"Убедитесь, что при отправке {method}-запроса на url `{url}`  "
+        f"c некорректными данными, возвращается статус-код {status_code}"
+    )
+
+    data = response.json()
+    expected_value = {"text": ["This field is required."]}
+    assert data == expected_value, (
+        f"Убедитесь, что при отправке {method}-запроса на url `{url}`  "
+        f"c некорректными данными, в теле ответа возвращаются ошибки."
     )
