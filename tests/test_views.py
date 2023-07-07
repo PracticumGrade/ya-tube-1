@@ -85,3 +85,10 @@ def test_incorrect_create_post(api_client):
         f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
         f"для создания нового поста, объект не был добавлен в БД."
     )
+
+    data = response.json()
+    expected_value = {"text": ["This field is required."]}
+    assert data == expected_value, (
+        f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
+        f"для создания нового поста c некорректными данными, в теле ответа возвращаются ошибки."
+    )
