@@ -18,14 +18,21 @@ def post_create_data():
     }
 
 
+@pytest.fixture
+def post_update_data():
+    return {
+        "text": "Новый текст заметки",
+    }
+
+
+@pytest.fixture
+def post_pk_for_args(post):
+    return post.pk,
+
+
 def test_posts_list(api_client, posts):
     url = reverse("posts:posts-list")
     response = api_client.get(url)
-
-    assert response.status_code == status.HTTP_200_OK, (
-        f"Убедитесь, что при отправке GET-запроса на url `{url}`  "
-        f"для получение списка постов возвращается статус-код {status.HTTP_200_OK}"
-    )
 
     data = response.json()
 
@@ -42,10 +49,6 @@ def test_posts_list(api_client, posts):
 def test_create_post(api_client, post_create_data):
     url = reverse("posts:posts-list")
     response = api_client.post(url, data=post_create_data)
-    assert response.status_code == status.HTTP_201_CREATED, (
-        f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
-        f"для создания нового поста возвращается статус-код {status.HTTP_201_CREATED}"
-    )
 
     assert Post.objects.count() == 1, (
         f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
@@ -91,4 +94,24 @@ def test_incorrect_create_post(api_client):
     assert data == expected_value, (
         f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
         f"для создания нового поста c некорректными данными, в теле ответа возвращаются ошибки."
+    )
+
+
+@pytest.mark.parametrize(
+    "method,name,args,status_code,data", [
+        ("GET", "posts:posts-list", None, status.HTTP_200_OK, None,),
+        ("POST", "posts:posts-list", None, status.HTTP_201_CREATED, pytest.lazy_fixture("post_create_data"),),
+        ("GET", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_200_OK, None,),
+        ("PUT", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_200_OK, pytest.lazy_fixture("post_update_data"),),
+        ("PATCH", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_200_OK, None,),
+        ("DELETE", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_204_NO_CONTENT, None,),
+    ]
+)
+def test_post_status_code(api_client, post, method, name, args, status_code, data):
+    url = reverse(name, args=args)
+    request_method = getattr(api_client, method.lower())
+    response = request_method(url, data=data)
+    assert response.status_code == status_code, (
+        f"Убедитесь, что при отправке {method}-запроса на url `{url}`  "
+        f"возвращается статус-код {status_code}"
     )
