@@ -113,6 +113,25 @@ def test_posts_list(api_client, posts):
     )
 
 
+@pytest.mark.parametrize(
+    "method, name, args, data", [
+        ("POST", "posts:posts-list", None, pytest.lazy_fixture("post_create_data"),),
+        ("GET", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), None,),
+        ("PUT", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), pytest.lazy_fixture("post_update_data"),),
+        ("PATCH", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), None,),
+    ]
+)
+def test_serialize_post(api_client, post, method, name, args, data):
+    url = reverse(name, args=args)
+    request_method = getattr(api_client, method.lower())
+    response = request_method(url, data=data)
+
+    data = response.json()
+    assert isinstance(data, dict), (
+        f"Убедитесь, что при отправке {method}-запроса на url `{url}` возвращается словарь"
+    )
+
+
 def test_create_post(api_client, post_create_data):
     url = reverse("posts:posts-list")
     response = api_client.post(url, data=post_create_data)
@@ -123,21 +142,9 @@ def test_create_post(api_client, post_create_data):
     )
 
     data = response.json()
-    assert isinstance(data, dict), (
+    assert data["text"] == post_create_data["text"], (
         f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
-        f"для создания нового поста возвращается словарь"
-    )
-
-    for field in POST_FIELDS:
-        assert field in data, (
-            f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
-            f"для создания нового поста, возвращаемый словарь содержит поле `{field}`"
-        )
-
-    text_field = "text"
-    assert post_create_data[text_field] == data[text_field], (
-        f"Убедитесь, что при отправке POST-запроса на url `{url}`  "
-        f"для создания нового поста, возвращается словарь созданного объекта с заполненным полем `{text_field}`"
+        f"для создания нового поста, возвращаемый словарь содержит верное значение поля `text`"
     )
 
 
@@ -149,4 +156,33 @@ def test_incorrect_create_post(api_client):
     assert Post.objects.count() == 0, (
         f"Убедитесь, что при отправке POST-запроса с некорректными данными на url `{url}`  "
         f"для создания нового поста, объект не был добавлен в БД."
+    )
+
+
+@pytest.mark.parametrize(
+    "method", [
+        "PUT",
+        "PATCH",
+    ]
+)
+def test_update_post(api_client, post, post_pk_for_args, post_update_data, method):
+    url = reverse("posts:posts-detail", args=post_pk_for_args)
+    request_method = getattr(api_client, method.lower())
+    response = request_method(url, data=post_update_data)
+
+    assert Post.objects.count() == 1, (
+        f"Убедитесь, что при отправке {method}-запроса на url `{url}`  "
+        f"для обновления поста, новый объект не был добавлен в БД."
+    )
+
+    post.refresh_from_db()
+    assert post.text == post_update_data["text"], (
+        f"Убедитесь, что при отправке {method}-запроса на url `{url}`  "
+        f"для обновления поста, пост был обновлен в БД."
+    )
+
+    data = response.json()
+    assert data["text"] == post_update_data["text"], (
+        f"Убедитесь, что при отправке {method}-запроса на url `{url}`  "
+        f"для обновления поста, возвращается словарь с обновленным полем `text`"
     )
