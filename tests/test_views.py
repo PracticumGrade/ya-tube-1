@@ -10,25 +10,6 @@ pytestmark = [
 ]
 
 
-@pytest.fixture
-def post_create_data():
-    return {
-        "text": "Текст заметки",
-    }
-
-
-@pytest.fixture
-def post_update_data():
-    return {
-        "text": "Новый текст заметки",
-    }
-
-
-@pytest.fixture
-def post_pk_for_args(post):
-    return post.pk,
-
-
 @pytest.mark.parametrize(
     "method,name,args,status_code,data", [
         ("GET", "posts:posts-list", None, status.HTTP_200_OK, None,),
