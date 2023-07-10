@@ -12,12 +12,12 @@ pytestmark = [
 
 @pytest.mark.parametrize(
     "method,name,args,status_code,data", [
-        ("GET", "posts:posts-list", None, status.HTTP_200_OK, None,),
-        ("POST", "posts:posts-list", None, status.HTTP_201_CREATED, pytest.lazy_fixture("post_create_data"),),
-        ("GET", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_200_OK, None,),
-        ("PUT", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_200_OK, pytest.lazy_fixture("post_update_data"),),
-        ("PATCH", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_200_OK, None,),
-        ("DELETE", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_204_NO_CONTENT, None,),
+        ("GET", "posts:post-list", None, status.HTTP_200_OK, None,),
+        ("POST", "posts:post-list", None, status.HTTP_201_CREATED, pytest.lazy_fixture("post_create_data"),),
+        ("GET", "posts:post-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_200_OK, None,),
+        ("PUT", "posts:post-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_200_OK, pytest.lazy_fixture("post_update_data"),),
+        ("PATCH", "posts:post-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_200_OK, None,),
+        ("DELETE", "posts:post-detail", pytest.lazy_fixture("post_pk_for_args"), status.HTTP_204_NO_CONTENT, None,),
     ]
 )
 def test_post_status_code(api_client, post, method, name, args, status_code, data):
@@ -40,7 +40,7 @@ def test_post_status_code(api_client, post, method, name, args, status_code, dat
 )
 def test_not_found_post(api_client, method, data):
     does_not_exists_pk = 123456789,
-    url = reverse("posts:posts-detail", args=does_not_exists_pk)
+    url = reverse("posts:post-detail", args=does_not_exists_pk)
     request_method = getattr(api_client, method.lower())
     response = request_method(url, data=data)
 
@@ -53,8 +53,8 @@ def test_not_found_post(api_client, method, data):
 
 @pytest.mark.parametrize(
     "method,name,args", [
-        ("POST", "posts:posts-list", None,),
-        ("PUT", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"),),
+        ("POST", "posts:post-list", None,),
+        ("PUT", "posts:post-detail", pytest.lazy_fixture("post_pk_for_args"),),
     ]
 )
 def test_bad_request_and_errors(api_client, post, method, name, args):
@@ -78,7 +78,7 @@ def test_bad_request_and_errors(api_client, post, method, name, args):
 
 
 def test_posts_list(api_client, posts):
-    url = reverse("posts:posts-list")
+    url = reverse("posts:post-list")
     response = api_client.get(url)
 
     data = response.json()
@@ -95,10 +95,10 @@ def test_posts_list(api_client, posts):
 
 @pytest.mark.parametrize(
     "method, name, args, data", [
-        ("POST", "posts:posts-list", None, pytest.lazy_fixture("post_create_data"),),
-        ("GET", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), None,),
-        ("PUT", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), pytest.lazy_fixture("post_update_data"),),
-        ("PATCH", "posts:posts-detail", pytest.lazy_fixture("post_pk_for_args"), None,),
+        ("POST", "posts:post-list", None, pytest.lazy_fixture("post_create_data"),),
+        ("GET", "posts:post-detail", pytest.lazy_fixture("post_pk_for_args"), None,),
+        ("PUT", "posts:post-detail", pytest.lazy_fixture("post_pk_for_args"), pytest.lazy_fixture("post_update_data"),),
+        ("PATCH", "posts:post-detail", pytest.lazy_fixture("post_pk_for_args"), None,),
     ]
 )
 def test_serialize_post(api_client, post, method, name, args, data):
@@ -113,7 +113,7 @@ def test_serialize_post(api_client, post, method, name, args, data):
 
 
 def test_create_post(api_client, post_create_data):
-    url = reverse("posts:posts-list")
+    url = reverse("posts:post-list")
     response = api_client.post(url, data=post_create_data)
 
     assert Post.objects.count() == 1, (
@@ -129,7 +129,7 @@ def test_create_post(api_client, post_create_data):
 
 
 def test_incorrect_create_post(api_client):
-    url = reverse("posts:posts-list")
+    url = reverse("posts:post-list")
     empty_data = {}
     api_client.post(url, data=empty_data)
 
@@ -146,7 +146,7 @@ def test_incorrect_create_post(api_client):
     ]
 )
 def test_update_post(api_client, post, post_pk_for_args, post_update_data, method):
-    url = reverse("posts:posts-detail", args=post_pk_for_args)
+    url = reverse("posts:post-detail", args=post_pk_for_args)
     request_method = getattr(api_client, method.lower())
     response = request_method(url, data=post_update_data)
 
@@ -169,7 +169,7 @@ def test_update_post(api_client, post, post_pk_for_args, post_update_data, metho
 
 
 def test_delete_post(api_client, posts, post, post_pk_for_args):
-    url = reverse("posts:posts-detail", args=post_pk_for_args)
+    url = reverse("posts:post-detail", args=post_pk_for_args)
     response = api_client.delete(url)
 
     assert Post.objects.count() == len(posts), (

@@ -6,8 +6,8 @@ from django.urls import NoReverseMatch
 @pytest.mark.parametrize(
     "viewname, args, expected_url",
     [
-        ("posts:posts-list", None, "/api/v1/posts/"),
-        ("posts:posts-detail", (1,), "/api/v1/posts/1/")
+        ("posts:post-list", None, "/api/v1/posts/"),
+        ("posts:post-detail", (1,), "/api/v1/posts/1/")
     ]
 )
 def test_reverse_match(viewname, args, expected_url):
