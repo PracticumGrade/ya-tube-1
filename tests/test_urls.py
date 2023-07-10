@@ -4,17 +4,22 @@ from django.urls import NoReverseMatch
 
 
 @pytest.mark.parametrize(
-    "viewname, args",
+    "viewname, args, expected_url",
     [
-        ("posts:posts-list", None),
-        ("posts:posts-detail", (1,))
+        ("posts:posts-list", None, "/api/v1/posts/"),
+        ("posts:posts-detail", (1,), "/api/v1/posts/1/")
     ]
 )
-def test_reverse_match(viewname, args):
+def test_reverse_match(viewname, args, expected_url):
     try:
-        reverse(viewname, args=args)
+        url = reverse(viewname, args=args)
     except NoReverseMatch as e:
         raise AssertionError(
             f"Проверьте, что в приложении `posts` в файле `posts/urls.py` "
             f"зарегистирован url под именем `{viewname}` согласно заданию. "
         ) from e
+
+    assert url == expected_url, (
+        f"Проверьте, что в приложении `posts` в файле `posts/urls.py` "
+        f"для имени `{viewname}` установлен верный шаблон url "
+    )
